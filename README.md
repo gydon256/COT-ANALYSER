@@ -1,99 +1,164 @@
-# COT Dashboard
+# COT Analyser MVP
 
-A browser-based Commitments of Traders dashboard for tracking non-commercial futures positioning, ranking markets, and using COT as a trade-bias filter.
+A free-to-run trader dashboard for Commitments of Traders analysis. The MVP uses Next.js App Router, TypeScript, Tailwind CSS v4, Supabase Auth, Supabase PostgreSQL, and Vercel-compatible deployment.
 
-The app is a static HTML/CSS/JavaScript project. It stores your loaded instruments, checklist state, settings, and notes in the browser's `localStorage`.
+The legacy static files are still in the repository as migration reference. The active app is the Next.js app under `app/`.
 
-## Features
+## Stack
 
-- Live CFTC Socrata API search and history fetch
-- Manual CFTC report paste support
-- CFTC CSV upload support
-- Multi-market COT overview table
-- Adjusted FX interpretation for pairs like `USDJPY`, `USDCHF`, and `USDCAD`
-- COT bias score, COT Index windows, percentile, streak, and weekly-change analysis
-- Hover/focus explanations for final signals such as `Crowded Short Unwinding`
-- Data freshness badge to warn when stored COT data may be stale
-- One-click `Update All` for saved CFTC instruments
-- Trade checklist and notes per instrument
-- JSON backup import/export
-- Market overview CSV export
+- Next.js App Router
+- TypeScript
+- Tailwind CSS v4
+- Supabase Free Plan for PostgreSQL and Auth
+- Recharts for free chart rendering
+- Vercel Free Plan compatible
 
-## Run It
+No Stripe, paid APIs, paid database, premium UI kit, or paid hosting is required.
 
-Open `index.html` directly in a browser.
+## Create A Free Supabase Project
 
-No build step is required. The app loads Chart.js and fonts from CDNs, so an internet connection is needed for the full visual experience.
+1. Go to [Supabase](https://supabase.com/) and create a free project.
+2. Open **Project Settings > API**.
+3. Copy:
+   - Project URL
+   - anon public key
+   - service role key, only for future trusted server-side ingestion
 
-## Install As An App
+## Configure Environment Variables
 
-The project includes a web app manifest, service worker, favicon, Apple touch icon, and launcher icons in `icons/`.
+Create `.env.local` from `.env.example`:
 
-For the best install experience, serve the folder from a local web server instead of opening it with `file://`:
-
-```powershell
-python -m http.server 8080
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Then open `http://localhost:8080` and use your browser's install option. Chrome/Edge usually show it in the address bar or browser menu as `Install app`.
+Never expose `SUPABASE_SERVICE_ROLE_KEY` in client components or `NEXT_PUBLIC_` variables.
 
-## Daily Workflow
+## Run SQL Migrations
 
-1. Open `index.html`.
-2. Click `Add Data`.
-3. Use `Live Fetch - CFTC API` to search a market such as `EUR/USD`, `USD/JPY`, `gold`, `crude oil`, or `s&p 500`.
-4. Choose the CFTC market result and confirm the short label.
-5. Review the `COT-ranked watchlist`, market overview table, and instrument detail cards.
-6. Hover a signal pill to read what the signal means.
-7. Use the checklist before taking a trade.
-8. Click `Update All` after new CFTC data is available.
-9. Export a JSON backup regularly.
+In Supabase, open **SQL Editor** and run these files in order:
 
-## Signal Notes
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/migrations/002_rls_policies.sql`
+3. `supabase/migrations/003_seed_data.sql`
+4. `supabase/migrations/004_ingestion_runs.sql`
 
-COT signals are positioning filters, not standalone entries.
+This creates:
 
-- `Crowded Long`: speculators are heavily net long. Trend may continue, but long entries can be late.
-- `Crowded Short`: speculators are heavily net short. Bearish continuation is possible, but short-covering risk rises.
-- `Crowded Long Weakening`: long crowding remains, but weekly positioning weakened.
-- `Crowded Short Unwinding`: short crowding remains, but weekly positioning improved, often suggesting short covering.
-- `Bullish Weekly Shift`: adjusted net positioning increased.
-- `Bearish Weekly Shift`: adjusted net positioning fell.
-- `Neutral`: no strong COT edge.
-- `Not Enough History`: fewer than 10 weeks are loaded.
+- `profiles`
+- `assets`
+- `cot_reports`
+- `watchlists`
+- `watchlist_items`
+- `alerts`
+- Row Level Security policies
+- An auth trigger that creates a profile when a user signs up
+- Seed assets and sample COT reports
+- Admin-visible CFTC ingestion run logs
 
-Always combine COT with your price model, level, trigger, stop, target, and position sizing.
+## Run Locally
 
-## Data And Storage
+Install dependencies:
 
-The app saves data locally in the browser. Clearing browser storage can remove your dashboard data.
-
-Use:
-
-- `Export` to save a JSON backup of instruments, settings, checklist state, and notes
-- `Import` to restore a prior backup
-- `Export Table CSV` to save the current market overview
-
-## Important Caveats
-
-- COT data is weekly and lagged. It is not intraday timing data.
-- The CFTC usually publishes reports after the report date, so check freshness before acting.
-- The app uses legacy non-commercial positioning from the configured CFTC dataset.
-- Missing or malformed long/short fields are skipped instead of treated as real zero values.
-- FX pairs with USD as the base currency need inverted interpretation; the dashboard adjusts these in the main views and exports.
-
-## Project Files
-
-- `index.html` - app markup and controls
-- `styles.css` - visual design and responsive layout
-- `app.js` - data ingestion, COT analysis, rendering, storage, export/import, and CFTC API calls
-
-## Development Checks
-
-Run a JavaScript syntax check:
-
-```powershell
-node --check app.js
+```bash
+npm install
 ```
 
-Because this is a static app, there is currently no package manager setup or automated test suite.
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```bash
+http://localhost:3000
+```
+
+Useful checks:
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+## Auth Flow
+
+The MVP supports:
+
+- Email/password signup
+- Email/password login
+- Logout
+- Password reset email
+- Password update from reset link
+- Session persistence with Supabase SSR cookies
+- Protected `/dashboard/*` routes
+
+Configure Supabase Auth redirect URLs for local and Vercel:
+
+```text
+http://localhost:3000/auth/callback
+https://your-vercel-domain.vercel.app/auth/callback
+```
+
+## Deploy On Vercel Free Plan
+
+1. Push the repository to GitHub.
+2. Import the repo into [Vercel](https://vercel.com/).
+3. Add the same environment variables from `.env.local`.
+4. Deploy.
+5. Add the deployed callback URL in Supabase Auth redirect settings.
+
+## Future CFTC Public Data Ingestion
+
+The folder `lib/cftc/` is prepared for free public CFTC data from CFTC Public Reporting:
+
+- `fetchCftc.ts` fetches public CFTC files.
+- `parseLegacyReport.ts` parses CSV-like legacy report rows.
+- `mapAssets.ts` matches CFTC market names to internal assets.
+- `upsertReports.ts` upserts reports using the server-only service role client.
+- `legacyApi.ts` reads the free Legacy Futures Only JSON endpoint.
+- `ingest.ts` fetches mapped assets and upserts COT reports server-side.
+
+The admin page at `/dashboard/admin` can run ingestion after `SUPABASE_SERVICE_ROLE_KEY` is configured. Do not run service-role ingestion from browser/client code.
+
+To make your own account an admin, run this in Supabase SQL after signing up:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (
+  select id from auth.users where email = 'your-email@example.com'
+);
+```
+
+The ingestion source is the official CFTC Public Reporting Environment. CFTC describes the API as allowing users to search and filter datasets including reporting date, commodity groups, and contract market name: [CFTC Commitments of Traders](https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm).
+
+## World-Class Free Roadmap
+
+The free-only product roadmap is in `docs/WORLD_CLASS_FREE_ROADMAP.md`.
+
+The recommended next build order is:
+
+1. Real CFTC ingestion and historical backfill.
+2. Reusable COT analytics module with tests.
+3. Asset detail pages.
+4. Watchlist ranking and latest-signal summaries.
+5. Weekly COT brief page.
+6. In-app alerts.
+7. Admin ingestion and mapping tools.
+8. RLS and calculation test suite.
+9. UX polish and mobile optimization.
+10. Public methodology and educational docs.
+
+## Security Notes
+
+- Passwords are handled only by Supabase Auth.
+- Row Level Security prevents users from reading or editing other users' watchlists and alerts.
+- Users can update only their own `username` and `full_name`.
+- Assets and COT reports are public read data.
+- Admin role support is prepared in SQL but not required for MVP.
