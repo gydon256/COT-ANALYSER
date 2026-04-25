@@ -125,6 +125,8 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 `SUPABASE_SERVICE_ROLE_KEY` must remain server-only. Do not prefix it with `NEXT_PUBLIC_`.
 
+For convenience, this repo can use a local-only `.env.vercel.local` file as a copy/paste reference when filling Vercel's Environment Variables form. This file is ignored by Git and must not be committed.
+
 ## Supabase Hosting Note
 
 Do not try to host this full Next.js app as a static Supabase Storage site. Supabase is the backend host for this project. The frontend should remain on Vercel Free Plan unless the app is later rewritten as a fully static client-only app or as Supabase Edge Functions. Supabase Edge Functions are Deno server-side functions, not a drop-in Next.js App Router host.
