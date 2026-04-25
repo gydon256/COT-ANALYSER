@@ -1,8 +1,23 @@
 export function getSupabaseConfig() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anonKey = (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  )?.trim();
 
-  if (!url || !anonKey) {
+  if (
+    !url ||
+    !anonKey ||
+    url.includes("your-project-ref") ||
+    anonKey.includes("your-supabase") ||
+    anonKey.includes("your-service")
+  ) {
+    return null;
+  }
+
+  try {
+    new URL(url);
+  } catch {
     return null;
   }
 

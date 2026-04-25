@@ -107,11 +107,29 @@ https://your-vercel-domain.vercel.app/auth/callback
 
 ## Deploy On Vercel Free Plan
 
+This app uses Supabase for backend services and Vercel for the Next.js frontend. Supabase hosts PostgreSQL, Auth, Storage, and Edge Functions. This project uses Next.js App Router server actions, route handlers, cookies, and middleware, so the frontend needs a Next-compatible host such as Vercel's free plan.
+
 1. Push the repository to GitHub.
 2. Import the repo into [Vercel](https://vercel.com/).
 3. Add the same environment variables from `.env.local`.
 4. Deploy.
 5. Add the deployed callback URL in Supabase Auth redirect settings.
+
+Required Vercel environment variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` must remain server-only. Do not prefix it with `NEXT_PUBLIC_`.
+
+## Supabase Hosting Note
+
+Do not try to host this full Next.js app as a static Supabase Storage site. Supabase is the backend host for this project. The frontend should remain on Vercel Free Plan unless the app is later rewritten as a fully static client-only app or as Supabase Edge Functions. Supabase Edge Functions are Deno server-side functions, not a drop-in Next.js App Router host.
+
+For the local signup page, `.env.local` must exist and the dev server must be restarted after adding the variables.
 
 ## Future CFTC Public Data Ingestion
 

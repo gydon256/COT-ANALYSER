@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
 const emailSchema = z.string().trim().email("Enter a valid email address.");
@@ -68,6 +69,14 @@ export async function signUpAction(formData: FormData) {
     redirect(`/auth/signup?error=${encodeMessage(parsed.error.issues[0]?.message ?? "Invalid signup details.")}`);
   }
 
+  if (!isSupabaseConfigured()) {
+    redirect(
+      `/auth/signup?error=${encodeMessage(
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local, then restart the dev server."
+      )}`
+    );
+  }
+
   const supabase = await createClient();
   const origin = await getOrigin();
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`;
@@ -114,6 +123,14 @@ export async function loginAction(formData: FormData) {
     );
   }
 
+  if (!isSupabaseConfigured()) {
+    redirect(
+      `/auth/login?next=${encodeURIComponent(next)}&error=${encodeMessage(
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local, then restart the dev server."
+      )}`
+    );
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
@@ -129,6 +146,10 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function logoutAction() {
+  if (!isSupabaseConfigured()) {
+    redirect("/auth/login");
+  }
+
   const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
@@ -144,6 +165,14 @@ export async function requestPasswordResetAction(formData: FormData) {
     redirect(
       `/auth/reset-password?error=${encodeMessage(
         parsed.error.issues[0]?.message ?? "Enter a valid email address."
+      )}`
+    );
+  }
+
+  if (!isSupabaseConfigured()) {
+    redirect(
+      `/auth/reset-password?error=${encodeMessage(
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local, then restart the dev server."
       )}`
     );
   }
@@ -177,6 +206,14 @@ export async function updatePasswordAction(formData: FormData) {
     redirect(
       `/auth/reset-password?mode=update&error=${encodeMessage(
         parsed.error.issues[0]?.message ?? "Invalid password."
+      )}`
+    );
+  }
+
+  if (!isSupabaseConfigured()) {
+    redirect(
+      `/auth/reset-password?mode=update&error=${encodeMessage(
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local, then restart the dev server."
       )}`
     );
   }
