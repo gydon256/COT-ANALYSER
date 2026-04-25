@@ -1,0 +1,128 @@
+:root {
+  /* Bias colors */
+  --color-up: #22c55e;
+  --color-up-muted: rgba(34, 197, 94, 0.12);
+  --color-down: #ef4444;
+  --color-down-muted: rgba(239, 68, 68, 0.12);
+  --color-neutral: #f59e0b;
+  --color-neutral-muted: rgba(245, 158, 11, 0.12);
+  --color-extreme: #7c3aed;
+  --color-extreme-muted: rgba(124, 58, 237, 0.15);
+
+  /* Surfaces (dark theme) */
+  --surface-0: #09090b;
+  --surface-1: #0d0d0f;
+  --surface-2: #141418;
+  --surface-3: #1c1c22;
+  --surface-4: #242430;
+
+  /* Borders */
+  --border-1: rgba(255,255,255,0.06);
+  --border-2: rgba(255,255,255,0.10);
+  --border-3: rgba(255,255,255,0.16);
+
+  /* Text */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #52525b;
+  --text-inverse: #09090b;
+
+  /* Accent */
+  --accent: #3b82f6;
+  --accent-muted: rgba(59, 130, 246, 0.12);
+
+  /* Spacing (8px grid) */
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: 24px;
+  --sp-4: 32px;
+  --sp-6: 48px;
+
+  /* Radius */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 9999px;
+
+  /* Transitions */
+  --ease-micro: 100ms ease-out;
+  --ease-component: 150ms ease-out;
+  --ease-page: 200ms ease-out;
+
+  /* Typography */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-data: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 28px;
+  --font-size-hero: 36px;
+}
+
+[data-theme="light"] {
+  --surface-0: #ffffff;
+  --surface-1: #f9f9f9;
+  --surface-2: #f0f0f0;
+  --surface-3: #e4e4e7;
+  --surface-4: #d4d4d8;
+  --border-1: rgba(0,0,0,0.06);
+  --border-2: rgba(0,0,0,0.10);
+  --border-3: rgba(0,0,0,0.16);
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-tertiary: #a1a1aa;
+  --text-inverse: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  min-height: 100%;
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-base);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+body[data-theme="light"] {
+  color-scheme: light;
+}
+
+.data,
+.score,
+.kpi-value,
+td.numeric,
+.bias-score,
+.cval,
+.csub,
+.clock,
+.clock-time,
+.freshness-badge,
+.fresh-pill,
+.score-bull,
+.score-bear,
+.score-neut,
+.num-pos,
+.num-neg,
+.num-muted,
+.market-table td,
+.cot-table td,
+.detail-item strong,
+.ring-text,
+.check-score-label {
+  font-family: var(--font-data);
+}
