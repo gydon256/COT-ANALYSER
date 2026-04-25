@@ -1,0 +1,13 @@
+⨯ Error: Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
+    at requireSupabaseConfig (lib\supabase\config.ts:20:11)
+    at createClient (lib\supabase\server.ts:8:49)
+    at BriefPage (app\dashboard\brief\page.tsx:16:38)
+  18 |
+  19 |   if (!config) {
+> 20 |     throw new Error(
+     |           ^
+  21 |       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_A...
+  22 |     );
+  23 |   } {
+  digest: '1586846434'
+}

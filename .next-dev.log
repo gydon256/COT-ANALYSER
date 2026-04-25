@@ -1,0 +1,15 @@
+
+> cot-analyser@0.1.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.8:3000
+✓ Ready in 1009ms
+
+○ Compiling / ...
+ GET / 200 in 4.5s (next.js: 3.9s, proxy.ts: 288ms, application-code: 357ms)
+ GET / 200 in 110ms (next.js: 10ms, proxy.ts: 9ms, application-code: 92ms)
+ GET / 200 in 92ms (next.js: 9ms, proxy.ts: 8ms, application-code: 75ms)
+ GET / 200 in 483ms (next.js: 157ms, proxy.ts: 150ms, application-code: 176ms)
+ GET /dashboard/brief 307 in 2.1s (next.js: 1795ms, proxy.ts: 145ms, application-code: 148ms)
