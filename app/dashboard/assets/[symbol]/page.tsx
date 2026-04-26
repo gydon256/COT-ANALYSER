@@ -1,28 +1,32 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Star } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { CotIndexChart } from "@/components/charts/CotIndexChart";
 import { PositioningChart } from "@/components/charts/PositioningChart";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SignalPill } from "@/components/dashboard/SignalPill";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { TradeWorkflowForm } from "@/components/dashboard/TradeWorkflowForm";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { StatusMessage } from "@/components/ui/StatusMessage";
 import { saveAssetToWatchlistAction } from "@/lib/actions/watchlists";
 import { analyzeCot } from "@/lib/cot/analytics";
 import { formatCompactNumber, formatDate, formatNumber } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { Asset, CotReport } from "@/lib/types";
+import type { Asset, CotReport, WatchlistItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ symbol: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function AssetDetailPage({ params }: PageProps) {
+export default async function AssetDetailPage({ params, searchParams }: PageProps) {
   const { symbol } = await params;
+  const statusParams = await searchParams;
   const supabase = await createClient();
   const normalizedSymbol = decodeURIComponent(symbol).toUpperCase();
 
@@ -47,16 +51,16 @@ export default async function AssetDetailPage({ params }: PageProps) {
   ]);
 
   const watchlistIds = (watchlists ?? []).map((watchlist) => watchlist.id);
-  let saved = false;
+  let watchlistItem: Pick<WatchlistItem, "id" | "bias_label" | "notes" | "checklist"> | null = null;
 
   if (watchlistIds.length) {
     const { data: item } = await supabase
       .from("watchlist_items")
-      .select("id")
+      .select("id, bias_label, notes, checklist")
       .eq("asset_id", asset.id)
       .in("watchlist_id", watchlistIds)
       .maybeSingle();
-    saved = Boolean(item);
+    watchlistItem = item as typeof watchlistItem;
   }
 
   const reports = (reportsData ?? []) as CotReport[];
@@ -77,11 +81,13 @@ export default async function AssetDetailPage({ params }: PageProps) {
         }
       />
 
+      <StatusMessage error={statusParams.error} message={statusParams.message} />
+
       <div className="flex flex-wrap items-center gap-3">
         <SignalPill signal={analysis.signal} title={analysis.explanation} />
         <span className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
           {analysis.freshness.label}
-          {analysis.freshness.daysOld != null ? ` · ${analysis.freshness.daysOld}d old` : ""}
+          {analysis.freshness.daysOld != null ? ` - ${analysis.freshness.daysOld}d old` : ""}
         </span>
         <span className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
           {analysis.meta.view}
@@ -120,12 +126,23 @@ export default async function AssetDetailPage({ params }: PageProps) {
           <form action={saveAssetToWatchlistAction}>
             <input name="assetId" type="hidden" value={asset.id} />
             <input name="returnTo" type="hidden" value={`/dashboard/assets/${asset.symbol}`} />
-            <SubmitButton pendingLabel="Saving..." variant={saved ? "secondary" : "primary"}>
-              {saved ? "Saved" : "Save to Watchlist"}
+            <SubmitButton pendingLabel="Saving..." variant={watchlistItem ? "secondary" : "primary"}>
+              {watchlistItem ? "Saved" : "Save to Watchlist"}
             </SubmitButton>
           </form>
         </CardHeader>
       </Card>
+
+      {watchlistItem ? (
+        <Card>
+          <CardBody>
+            <TradeWorkflowForm
+              item={watchlistItem}
+              returnTo={`/dashboard/assets/${encodeURIComponent(asset.symbol)}`}
+            />
+          </CardBody>
+        </Card>
+      ) : null}
 
       <section className="grid gap-5 xl:grid-cols-2">
         <Card>

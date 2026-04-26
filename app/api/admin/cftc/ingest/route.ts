@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { validateFetchWeeks } from "@/lib/cftc/allowedMarkets";
 import { ingestKnownCftcAssets } from "@/lib/cftc/ingest";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,9 +24,9 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const weeks = Number.isFinite(Number(body.weeks)) ? Number(body.weeks) : 260;
+  const weeks = validateFetchWeeks(body.weeks);
   const result = await ingestKnownCftcAssets({
-    weeks: Math.min(Math.max(Math.trunc(weeks), 4), 1040),
+    weeks,
     createdBy: user.id
   });
 

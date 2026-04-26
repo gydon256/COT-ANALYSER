@@ -13,18 +13,18 @@ type DashboardShellProps = {
 
 export function DashboardShell({ children, email, profile }: DashboardShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-white p-4 md:grid md:grid-rows-[auto_1fr_auto]">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-[var(--panel)] p-4 md:grid md:grid-rows-[auto_1fr_auto]">
         <DashboardBrand />
         <div className="mt-8">
           <DashboardNav />
         </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="rounded-lg border border-slate-200 bg-[var(--panel-2)] p-3">
           <p className="truncate text-sm font-semibold text-slate-950">
             {profile?.full_name || profile?.username || email}
           </p>
           <p className="mt-1 truncate text-xs text-slate-500">{email}</p>
-          <p className="mt-3 inline-flex rounded-md bg-white px-2 py-1 text-xs font-semibold uppercase text-teal-800">
+          <p className="mt-3 inline-flex rounded-md bg-[rgba(20,184,166,0.14)] px-2 py-1 text-xs font-semibold uppercase text-teal-800">
             {profile?.plan ?? "free"} plan
           </p>
           <form action={logoutAction} className="mt-3">

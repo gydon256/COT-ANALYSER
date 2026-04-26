@@ -46,6 +46,24 @@ export type WatchlistItem = {
   watchlist_id: number;
   asset_id: number;
   created_at: string;
+  notes: string;
+  bias_label: "bullish" | "bearish" | "neutral" | "waiting";
+  checklist: {
+    bias?: boolean;
+    level?: boolean;
+    trigger?: boolean;
+    risk?: boolean;
+  };
+  updated_at: string;
+};
+
+export type AssetAlias = {
+  id: number;
+  asset_id: number;
+  alias: string;
+  normalized_alias: string;
+  kind: string;
+  created_at: string;
 };
 
 export type Alert = {
@@ -69,6 +87,19 @@ export type IngestionRun = {
   latest_report_date: string | null;
   error_message: string | null;
   created_by: string | null;
+};
+
+export type IngestionAssetResult = {
+  id: number;
+  run_id: number | null;
+  asset_id: number | null;
+  symbol: string | null;
+  cftc_market_name: string;
+  status: string;
+  rows_upserted: number;
+  latest_report_date: string | null;
+  error_message: string | null;
+  created_at: string;
 };
 
 export type AssetWithReports = Asset & {

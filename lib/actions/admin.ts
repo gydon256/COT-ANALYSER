@@ -7,7 +7,7 @@ import { ingestKnownCftcAssets } from "@/lib/cftc/ingest";
 import { createClient } from "@/lib/supabase/server";
 
 const ingestionSchema = z.object({
-  weeks: z.coerce.number().int().min(4).max(1040).default(260)
+  weeks: z.coerce.number().int().refine((value) => value === 52 || value === 126).default(52)
 });
 
 function encodeMessage(message: string) {
@@ -39,14 +39,15 @@ async function requireAdmin() {
 
 export async function runCftcIngestionAction(formData: FormData) {
   const parsed = ingestionSchema.safeParse({
-    weeks: formData.get("weeks") ?? 260
+    weeks: formData.get("weeks") ?? 52
   });
 
   if (!parsed.success) {
-    redirect(`/dashboard/admin?error=${encodeMessage("Choose a range between 4 and 1040 weeks.")}`);
+    redirect(`/dashboard/admin?error=${encodeMessage("Choose 52 weeks or 126 weeks.")}`);
   }
 
   const user = await requireAdmin();
+  let destination = "/dashboard/admin";
 
   try {
     const result = await ingestKnownCftcAssets({
@@ -61,13 +62,13 @@ export async function runCftcIngestionAction(formData: FormData) {
     revalidatePath("/dashboard/admin");
 
     const status = result.errors.length ? "completed with warnings" : "completed";
-    redirect(
-      `/dashboard/admin?message=${encodeMessage(
-        `CFTC ingestion ${status}: ${result.reportsUpserted} reports across ${result.assetsChecked} assets.`
-      )}`
-    );
+    destination = `/dashboard/admin?message=${encodeMessage(
+      `CFTC ingestion ${status}: ${result.reportsUpserted} reports across ${result.assetsChecked} assets.`
+    )}`;
   } catch (error) {
     const message = error instanceof Error ? error.message : "CFTC ingestion failed.";
     redirect(`/dashboard/admin?error=${encodeMessage(message)}`);
   }
+
+  redirect(destination);
 }

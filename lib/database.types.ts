@@ -115,6 +115,37 @@ export type Database = {
           }
         ];
       };
+      asset_aliases: {
+        Row: {
+          id: number;
+          asset_id: number;
+          alias: string;
+          normalized_alias: string;
+          kind: string;
+          created_at: string;
+        };
+        Insert: {
+          asset_id: number;
+          alias: string;
+          normalized_alias: string;
+          kind?: string;
+          created_at?: string;
+        };
+        Update: {
+          alias?: string;
+          normalized_alias?: string;
+          kind?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "asset_aliases_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "assets";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       watchlists: {
         Row: {
           id: number;
@@ -138,15 +169,27 @@ export type Database = {
           watchlist_id: number;
           asset_id: number;
           created_at: string;
+          notes: string;
+          bias_label: string;
+          checklist: Json;
+          updated_at: string;
         };
         Insert: {
           watchlist_id: number;
           asset_id: number;
           created_at?: string;
+          notes?: string;
+          bias_label?: string;
+          checklist?: Json;
+          updated_at?: string;
         };
         Update: {
           watchlist_id?: number;
           asset_id?: number;
+          notes?: string;
+          bias_label?: string;
+          checklist?: Json;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -231,6 +274,57 @@ export type Database = {
           error_message?: string | null;
         };
         Relationships: [];
+      };
+      ingestion_asset_results: {
+        Row: {
+          id: number;
+          run_id: number | null;
+          asset_id: number | null;
+          symbol: string | null;
+          cftc_market_name: string;
+          status: string;
+          rows_upserted: number;
+          latest_report_date: string | null;
+          error_message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          run_id?: number | null;
+          asset_id?: number | null;
+          symbol?: string | null;
+          cftc_market_name: string;
+          status: string;
+          rows_upserted?: number;
+          latest_report_date?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          run_id?: number | null;
+          asset_id?: number | null;
+          symbol?: string | null;
+          cftc_market_name?: string;
+          status?: string;
+          rows_upserted?: number;
+          latest_report_date?: string | null;
+          error_message?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_asset_results_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "assets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ingestion_asset_results_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "ingestion_runs";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: Record<string, never>;

@@ -4,13 +4,12 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FormField } from "@/components/ui/FormField";
 import { StatusMessage } from "@/components/ui/StatusMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { runCftcIngestionAction } from "@/lib/actions/admin";
 import { formatDate, formatNumber } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { IngestionRun } from "@/lib/types";
+import type { IngestionAssetResult, IngestionRun } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -49,17 +48,23 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const [{ data: runs }, { count: assetsCount }, { count: reportsCount }] = await Promise.all([
+  const [{ data: runs }, { data: assetResults }, { count: assetsCount }, { count: reportsCount }] = await Promise.all([
     supabase
       .from("ingestion_runs")
       .select("*")
       .order("started_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("ingestion_asset_results")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20),
     supabase.from("assets").select("id", { count: "exact", head: true }),
     supabase.from("cot_reports").select("id", { count: "exact", head: true })
   ]);
 
   const ingestionRuns = (runs ?? []) as IngestionRun[];
+  const ingestionAssetResults = (assetResults ?? []) as IngestionAssetResult[];
 
   return (
     <>
@@ -92,23 +97,28 @@ export default async function AdminPage({ searchParams }: PageProps) {
             CFTC ingestion
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Pull Legacy Futures Only rows from CFTC Public Reporting for every mapped asset.
+            Update every imported CME, COMEX, and NYMEX asset. History is capped at 126 weeks.
           </p>
         </CardHeader>
         <CardBody>
           <form action={runCftcIngestionAction} className="grid gap-4 sm:grid-cols-[220px_auto] sm:items-end">
-            <FormField
-              defaultValue="260"
-              hint="260 weeks is about 5 years. Max 1040."
-              label="History weeks"
-              max={1040}
-              min={4}
-              name="weeks"
-              required
-              type="number"
-            />
+            <label className="grid gap-2 text-sm font-medium text-slate-800" htmlFor="admin-weeks">
+              <span>History</span>
+              <select
+                className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+                defaultValue="52"
+                id="admin-weeks"
+                name="weeks"
+              >
+                <option value="52">52 weeks recommended</option>
+                <option value="126">126 weeks maximum</option>
+              </select>
+              <span className="text-xs font-normal text-slate-500">
+                Use 126 weeks only when a deeper review is needed.
+              </span>
+            </label>
             <SubmitButton className="w-full sm:w-auto" pendingLabel="Running ingestion...">
-              Run CFTC ingestion
+              Update imported assets
             </SubmitButton>
           </form>
         </CardBody>
@@ -156,6 +166,55 @@ export default async function AdminPage({ searchParams }: PageProps) {
             <EmptyState
               title="No ingestion runs yet"
               body="Run the first CFTC ingestion after configuring the service role key."
+            />
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-bold text-slate-950">Per-asset ingestion results</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Recent row counts, latest report dates, skipped venues, and mapping failures.
+          </p>
+        </CardHeader>
+        <CardBody>
+          {ingestionAssetResults.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
+                    <th className="py-3 pr-4">Market</th>
+                    <th className="py-3 pr-4">Status</th>
+                    <th className="py-3 pr-4">Rows</th>
+                    <th className="py-3 pr-4">Latest report</th>
+                    <th className="py-3 pr-4">Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ingestionAssetResults.map((result) => (
+                    <tr key={result.id} className="border-b border-slate-100 last:border-0">
+                      <td className="py-3 pr-4">
+                        <p className="font-semibold text-slate-950">{result.symbol ?? "Market"}</p>
+                        <p className="text-xs text-slate-500">{result.cftc_market_name}</p>
+                      </td>
+                      <td className="py-3 pr-4 font-semibold text-slate-950">{result.status}</td>
+                      <td className="py-3 pr-4 text-slate-700">{formatNumber(result.rows_upserted)}</td>
+                      <td className="py-3 pr-4 text-slate-700">
+                        {formatDate(result.latest_report_date)}
+                      </td>
+                      <td className="max-w-xs truncate py-3 pr-4 text-slate-500">
+                        {result.error_message ?? "None"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No per-asset results yet"
+              body="Run an update or import a market from the Assets page to populate this table."
             />
           )}
         </CardBody>

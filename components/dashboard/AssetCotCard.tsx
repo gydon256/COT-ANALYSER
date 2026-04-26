@@ -7,17 +7,21 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { removeWatchlistItemAction } from "@/lib/actions/watchlists";
 import { analyzeCot } from "@/lib/cot/analytics";
 import { formatCompactNumber, formatDate, formatNumber } from "@/lib/format";
-import type { Asset, CotReport } from "@/lib/types";
+import type { Asset, CotReport, WatchlistItem } from "@/lib/types";
 
 type AssetCotCardProps = {
   asset: Asset;
-  itemId: number;
+  item: Pick<WatchlistItem, "id" | "bias_label" | "notes" | "checklist">;
   reports: CotReport[];
 };
 
-export function AssetCotCard({ asset, itemId, reports }: AssetCotCardProps) {
+export function AssetCotCard({ asset, item, reports }: AssetCotCardProps) {
   const latest = reports.at(-1);
   const analysis = analyzeCot(asset, reports);
+  const checklist = item.checklist ?? {};
+  const readyCount = ["bias", "level", "trigger", "risk"].filter(
+    (key) => Boolean(checklist[key as keyof typeof checklist])
+  ).length;
   const chartData: PositioningPoint[] = reports.map((report) => ({
     reportDate: report.report_date,
     nonCommercialNet: report.non_commercial_net,
@@ -45,7 +49,7 @@ export function AssetCotCard({ asset, itemId, reports }: AssetCotCardProps) {
           <p className="mt-1 text-xs text-slate-500">{asset.cftc_market_name}</p>
         </div>
         <form action={removeWatchlistItemAction}>
-          <input name="itemId" type="hidden" value={itemId} />
+          <input name="itemId" type="hidden" value={item.id} />
           <Button type="submit" variant="secondary">
             <Trash2 size={16} aria-hidden="true" />
             Remove
@@ -58,6 +62,16 @@ export function AssetCotCard({ asset, itemId, reports }: AssetCotCardProps) {
           <Summary label="Open interest" value={formatNumber(latest?.open_interest)} />
           <Summary label="Adjusted net" value={formatCompactNumber(analysis.latest?.adjustedNet)} />
           <Summary label="52w COT Index" value={analysis.cotIndex52 == null ? "n/a" : `${Math.round(analysis.cotIndex52)}/100`} />
+        </div>
+        <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 md:grid-cols-[180px_1fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workflow</p>
+            <p className="mt-1 font-bold capitalize text-slate-950">{item.bias_label}</p>
+            <p className="mt-1 text-xs text-slate-500">{readyCount}/4 checklist ready</p>
+          </div>
+          <p className="leading-6 text-slate-600">
+            {item.notes ? item.notes : "No notes yet. Open the asset detail page to save a trade plan."}
+          </p>
         </div>
         <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
           {analysis.explanation}

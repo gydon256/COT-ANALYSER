@@ -1,4 +1,8 @@
-import { fetchLegacyReportsForMarket, mapLegacyRowToReport } from "@/lib/cftc/legacyApi";
+import {
+  fetchAllowedMarketHistory,
+  isAllowedCftcMarketName,
+  validateFetchWeeks
+} from "@/lib/cftc/allowedMarkets";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Asset } from "@/lib/types";
 
@@ -30,6 +34,7 @@ export async function ingestKnownCftcAssets(options: {
   const errors: string[] = [];
   let reportsUpserted = 0;
   let latestReportDate: string | null = null;
+  const weeks = validateFetchWeeks(options.weeks ?? 52);
 
   try {
     let assetsQuery = supabase.from("assets").select("*").order("symbol", { ascending: true });
@@ -46,13 +51,21 @@ export async function ingestKnownCftcAssets(options: {
 
     for (const asset of (assets ?? []) as Asset[]) {
       try {
-        const rows = await fetchLegacyReportsForMarket({
+        if (!isAllowedCftcMarketName(asset.cftc_market_name)) {
+          await recordAssetResult({
+            runId,
+            asset,
+            status: "skipped",
+            errorMessage: "Unsupported CFTC venue. Only CME, COMEX, and NYMEX are importable."
+          });
+          continue;
+        }
+
+        const reports = await fetchAllowedMarketHistory({
           cftcMarketName: asset.cftc_market_name,
-          weeks: options.weeks ?? 260
+          assetId: asset.id,
+          weeks
         });
-        const reports = rows
-          .map((row) => mapLegacyRowToReport(asset.id, row))
-          .filter((report) => report != null);
 
         if (reports.length) {
           const { error: upsertError } = await supabase.from("cot_reports").upsert(reports, {
@@ -69,10 +82,31 @@ export async function ingestKnownCftcAssets(options: {
           if (assetLatest && (!latestReportDate || assetLatest > latestReportDate)) {
             latestReportDate = assetLatest;
           }
+
+          await recordAssetResult({
+            runId,
+            asset,
+            status: "success",
+            rowsUpserted: reports.length,
+            latestReportDate: assetLatest
+          });
+        } else {
+          await recordAssetResult({
+            runId,
+            asset,
+            status: "failed",
+            errorMessage: "No valid non-commercial CFTC rows were returned."
+          });
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown CFTC ingestion error.";
         errors.push(`${asset.symbol}: ${message}`);
+        await recordAssetResult({
+          runId,
+          asset,
+          status: "failed",
+          errorMessage: message
+        });
       }
 
       await sleep(150);
@@ -119,5 +153,30 @@ export async function ingestKnownCftcAssets(options: {
 function sleep(ms: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
+  });
+}
+
+async function recordAssetResult(options: {
+  runId?: number | null;
+  asset: Asset;
+  status: "success" | "failed" | "skipped";
+  rowsUpserted?: number;
+  latestReportDate?: string | null;
+  errorMessage?: string | null;
+}) {
+  if (!options.runId) {
+    return;
+  }
+
+  const supabase = createServiceRoleClient();
+  await supabase.from("ingestion_asset_results").insert({
+    run_id: options.runId,
+    asset_id: options.asset.id,
+    symbol: options.asset.symbol,
+    cftc_market_name: options.asset.cftc_market_name,
+    status: options.status,
+    rows_upserted: options.rowsUpserted ?? 0,
+    latest_report_date: options.latestReportDate ?? null,
+    error_message: options.errorMessage ?? null
   });
 }

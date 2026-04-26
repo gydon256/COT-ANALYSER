@@ -7,8 +7,8 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 const variants: Record<ButtonVariant, string> = {
   primary: "bg-teal-700 text-white hover:bg-teal-800 focus-visible:outline-teal-700",
   secondary:
-    "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 focus-visible:outline-slate-500",
-  ghost: "text-slate-700 hover:bg-slate-100 focus-visible:outline-slate-500",
+    "border border-slate-300 bg-[var(--panel-2)] text-slate-900 hover:bg-slate-50 focus-visible:outline-slate-500",
+  ghost: "text-slate-700 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-slate-500",
   danger: "bg-red-700 text-white hover:bg-red-800 focus-visible:outline-red-700"
 };
 

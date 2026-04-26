@@ -7,6 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 
 const assetIdSchema = z.coerce.number().int().positive();
 const itemIdSchema = z.coerce.number().int().positive();
+const workflowSchema = z.object({
+  itemId: z.coerce.number().int().positive(),
+  biasLabel: z.enum(["bullish", "bearish", "neutral", "waiting"]).default("waiting"),
+  notes: z.string().max(4000).default(""),
+  returnTo: z.string().optional()
+});
 
 function encodeMessage(message: string) {
   return encodeURIComponent(message);
@@ -119,4 +125,61 @@ export async function removeWatchlistItemAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/watchlist");
   redirect(`/dashboard/watchlist?message=${encodeMessage("Asset removed from watchlist.")}`);
+}
+
+export async function updateWatchlistItemWorkflowAction(formData: FormData) {
+  const parsed = workflowSchema.safeParse({
+    itemId: formData.get("itemId"),
+    biasLabel: formData.get("biasLabel") ?? "waiting",
+    notes: formData.get("notes") ?? "",
+    returnTo: formData.get("returnTo") ?? "/dashboard/watchlist"
+  });
+
+  const returnTo = safeReturnPath(formData.get("returnTo"));
+
+  if (!parsed.success) {
+    redirect(`${returnTo}?error=${encodeMessage("Invalid workflow details.")}`);
+  }
+
+  const { supabase } = await requireUser();
+  const checklist = {
+    bias: formData.get("check_bias") === "on",
+    level: formData.get("check_level") === "on",
+    trigger: formData.get("check_trigger") === "on",
+    risk: formData.get("check_risk") === "on"
+  };
+
+  const { data: item, error: itemError } = await supabase
+    .from("watchlist_items")
+    .select("id, asset_id, assets(symbol)")
+    .eq("id", parsed.data.itemId)
+    .maybeSingle();
+
+  if (itemError || !item) {
+    redirect(`${returnTo}?error=${encodeMessage("Watchlist item was not found.")}`);
+  }
+
+  const { error } = await supabase
+    .from("watchlist_items")
+    .update({
+      bias_label: parsed.data.biasLabel,
+      notes: parsed.data.notes.trim(),
+      checklist
+    })
+    .eq("id", parsed.data.itemId);
+
+  if (error) {
+    redirect(`${returnTo}?error=${encodeMessage(error.message)}`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/watchlist");
+  revalidatePath("/dashboard/brief");
+
+  const symbol = Array.isArray(item.assets) ? item.assets[0]?.symbol : item.assets?.symbol;
+  if (symbol) {
+    revalidatePath(`/dashboard/assets/${symbol}`);
+  }
+
+  redirect(`${returnTo}?message=${encodeMessage("Trade workflow saved.")}`);
 }

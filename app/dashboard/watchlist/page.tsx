@@ -16,6 +16,14 @@ type PageProps = {
 type WatchlistItemRow = {
   id: number;
   asset_id: number;
+  notes: string;
+  bias_label: "bullish" | "bearish" | "neutral" | "waiting";
+  checklist: {
+    bias?: boolean;
+    level?: boolean;
+    trigger?: boolean;
+    risk?: boolean;
+  };
   assets: Asset | null;
 };
 
@@ -53,7 +61,7 @@ export default async function WatchlistPage({ searchParams }: PageProps) {
 
   const { data: items } = await supabase
     .from("watchlist_items")
-    .select("id, asset_id, assets(*)")
+    .select("id, asset_id, notes, bias_label, checklist, assets(*)")
     .in("watchlist_id", watchlistIds)
     .order("created_at", { ascending: true });
 
@@ -102,7 +110,7 @@ export default async function WatchlistPage({ searchParams }: PageProps) {
               <AssetCotCard
                 key={item.id}
                 asset={item.assets}
-                itemId={item.id}
+                item={item}
                 reports={reportsByAsset.get(item.asset_id) ?? []}
               />
             ) : null

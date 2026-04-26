@@ -44,6 +44,7 @@ In Supabase, open **SQL Editor** and run these files in order:
 2. `supabase/migrations/002_rls_policies.sql`
 3. `supabase/migrations/003_seed_data.sql`
 4. `supabase/migrations/004_ingestion_runs.sql`
+5. `supabase/migrations/005_asset_mapping_workflow.sql`
 
 This creates:
 
@@ -57,6 +58,7 @@ This creates:
 - An auth trigger that creates a profile when a user signs up
 - Seed assets and sample COT reports
 - Admin-visible CFTC ingestion run logs
+- Asset aliases, per-asset ingestion result logs, watchlist notes, bias labels, and trade checklist state
 
 ## Run Locally
 
@@ -97,6 +99,31 @@ The MVP supports:
 - Password update from reset link
 - Session persistence with Supabase SSR cookies
 - Protected `/dashboard/*` routes
+
+## Live CFTC Asset Import
+
+Authenticated users can import public Legacy Futures Only history directly from CFTC Socrata through the `/dashboard/assets` search flow.
+
+Supported venues:
+
+- `CHICAGO MERCANTILE EXCHANGE` - shown as `CME (preferred)`
+- `COMMODITY EXCHANGE INC.` - COMEX metals
+- `NEW YORK MERCANTILE EXCHANGE` - NYMEX energy/oil
+
+History choices:
+
+- 52 weeks, recommended default
+- 126 weeks, maximum
+
+Common trader aliases are mapped to official CFTC names before fetching:
+
+- `USOIL`, `US OIL`, `WTI`, `WTIUSD` -> `WTI FINANCIAL CRUDE OIL - NEW YORK MERCANTILE EXCHANGE`
+- `UKOIL`, `UK OIL`, `BRENT`, `BRENTUSD` -> `BRENT LAST DAY - NEW YORK MERCANTILE EXCHANGE`
+- `XAUUSD`, `GOLD` -> `GOLD - COMMODITY EXCHANGE INC.`
+- `XAGUSD`, `SILVER` -> `SILVER - COMMODITY EXCHANGE INC.`
+- Major FX, selected indices, Bitcoin, and Ether use CME where available
+
+Fetched CFTC reports are shared public market data in `assets` and `cot_reports`. User-specific notes, bias labels, checklist state, and saved markets stay private through `watchlists` and `watchlist_items`.
 
 Configure Supabase Auth redirect URLs for local and Vercel:
 

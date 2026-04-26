@@ -36,19 +36,21 @@ export function PositioningChart({ data }: PositioningChartProps) {
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+          <CartesianGrid stroke="#27323d" strokeDasharray="3 3" />
           <XAxis
             dataKey="reportDate"
             minTickGap={24}
-            tick={{ fill: "#64748b", fontSize: 12 }}
+            tick={{ fill: "#94a3b8", fontSize: 12 }}
             tickFormatter={formatDate}
           />
-          <YAxis tick={{ fill: "#64748b", fontSize: 12 }} tickFormatter={formatCompactNumber} />
+          <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} tickFormatter={formatCompactNumber} />
           <Tooltip
             contentStyle={{
-              border: "1px solid #cbd5e1",
+              background: "#11161c",
+              border: "1px solid #2a3541",
               borderRadius: 8,
-              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.12)"
+              color: "#edf4f8",
+              boxShadow: "0 12px 34px rgba(0, 0, 0, 0.32)"
             }}
             formatter={(value) =>
               typeof value === "number" ? formatNumber(value) : String(value ?? "n/a")
@@ -60,7 +62,7 @@ export function PositioningChart({ data }: PositioningChartProps) {
             dataKey="nonCommercialNet"
             dot={false}
             name="Non-commercial net"
-            stroke="#0f766e"
+            stroke="#14b8a6"
             strokeWidth={2}
             type="monotone"
           />
@@ -68,7 +70,7 @@ export function PositioningChart({ data }: PositioningChartProps) {
             dataKey="commercialNet"
             dot={false}
             name="Commercial net"
-            stroke="#b91c1c"
+            stroke="#f87171"
             strokeWidth={2}
             type="monotone"
           />
@@ -76,7 +78,7 @@ export function PositioningChart({ data }: PositioningChartProps) {
             dataKey="openInterest"
             dot={false}
             name="Open interest"
-            stroke="#475569"
+            stroke="#fbbf24"
             strokeWidth={2}
             type="monotone"
           />

@@ -1,3 +1,5 @@
+import { getErrorMessage } from "@/lib/errors";
+
 export async function fetchCftcPublicFile(url: string) {
   const parsedUrl = new URL(url);
 
@@ -5,12 +7,7 @@ export async function fetchCftcPublicFile(url: string) {
     throw new Error("Only public CFTC URLs are supported.");
   }
 
-  const response = await fetch(parsedUrl, {
-    cache: "no-store",
-    headers: {
-      accept: "text/plain,text/csv,*/*"
-    }
-  });
+  const response = await fetchCftc(parsedUrl, "text/plain,text/csv,*/*");
 
   if (!response.ok) {
     throw new Error(`CFTC request failed with ${response.status}.`);
@@ -26,18 +23,24 @@ export async function fetchCftcJson<T>(url: string) {
     throw new Error("Only public CFTC URLs are supported.");
   }
 
-  const response = await fetch(parsedUrl, {
-    cache: "no-store",
-    headers: {
-      accept: "application/json"
-    }
-  });
+  const response = await fetchCftc(parsedUrl, "application/json");
 
   if (!response.ok) {
     throw new Error(`CFTC request failed with ${response.status}.`);
   }
 
   return response.json() as Promise<T>;
+}
+
+async function fetchCftc(parsedUrl: URL, accept: string) {
+  try {
+    return await fetch(parsedUrl, {
+      cache: "no-store",
+      headers: { accept }
+    });
+  } catch (error) {
+    throw new Error(`CFTC request failed: ${getErrorMessage(error, "network request failed")}`);
+  }
 }
 
 function isAllowedCftcHost(hostname: string) {
